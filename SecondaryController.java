@@ -9,14 +9,14 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-public class PrimaryController {
+public class SecondaryController {
 
     @FXML
-    private javafx.scene.control.Button primaryButton;
+    private javafx.scene.control.Button secondaryButton;
 
     @FXML
-    void switchToSecondary(ActionEvent event) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource("secondary.fxml"));
+    void switchToPrimary(ActionEvent event) throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource("primary.fxml"));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.setScene(new Scene(root));
         stage.show();

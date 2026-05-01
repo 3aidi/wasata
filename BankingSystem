@@ -51,7 +51,7 @@ public class BankingSystem {
 
         try {
             try (PreparedStatement customerStmt = conn.prepareStatement(customerInsertSQL, PreparedStatement.RETURN_GENERATED_KEYS)) {
-                // TODO 1: Insert the customer into the customers table
+                // TODO 1: insert the customer into the customers table
                 customerStmt.setString(1, customer.getName());
                 customerStmt.setString(2, customer.getAddress());
                 customerStmt.executeUpdate();
@@ -64,7 +64,7 @@ public class BankingSystem {
                     customer.setId(customerId);
                 }
 
-                // TODO 2: Insert new account into accounts table
+                // TODO 2: insert new account into accounts table
                 try (PreparedStatement accountStmt = conn.prepareStatement(accountInsertSQL)) {
                     accountStmt.setInt(1, customerId);
                     accountStmt.setDouble(2, initialBalance);
@@ -76,14 +76,9 @@ public class BankingSystem {
                 System.out.println("Account created for " + customer.getName() + " successfully.");
 
             } catch (SQLException e) {
-                // TODO 3: Rollback the transaction on error
-                System.err.println("SQLException during account creation: " + e.getMessage());
-                try {
-                    conn.rollback();
-                    System.out.println("Transaction rolled back.");
-                } catch (SQLException rollbackEx) {
-                    System.err.println("Error during rollback: " + rollbackEx.getMessage());
-                }
+                // TODO 3: if any error occurs, rollback the transaction
+                conn.rollback();
+                System.err.println("Transaction rolled back: " + e.getMessage());
             }
 
         } catch (SQLException e) {
@@ -93,24 +88,17 @@ public class BankingSystem {
 
     // Task 2: Update customer details
     public static void updateCustomerDetails(Connection conn, Customer customer) {
-        // TODO 4: SQL UPDATE query to change the customer's address
         String updateSQL = "UPDATE customers SET address = ? WHERE id = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(updateSQL)) {
-            // TODO 5: Set the new address and use the customer's ID to locate the record
             stmt.setString(1, customer.getAddress());
             stmt.setInt(2, customer.getId());
-
-            // TODO 6: Execute the update and display result message
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
                 System.out.println(customer.getName() + " details updated successfully.");
             } else {
                 System.out.println("Customer wasn't found.");
             }
-
-            conn.commit();
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -118,32 +106,23 @@ public class BankingSystem {
 
     // Task 3: Delete a customer account
     public static void deleteCustomerAccount(Connection conn, int accountId) {
-        // TODO 7: SQL DELETE queries for account and customer
         String deleteAccountSQL = "DELETE FROM accounts WHERE id = ?";
         String deleteCustomerSQL = "DELETE FROM customers WHERE id = ?";
 
         try {
-            // TODO 8: Retrieve the customer ID associated with this account
             int customerId = getCustomerIdFromAccountId(conn, accountId);
-
-            // TODO 9: Delete the account
-            try (PreparedStatement deleteAccountStmt = conn.prepareStatement(deleteAccountSQL)) {
-                deleteAccountStmt.setInt(1, accountId);
-                deleteAccountStmt.executeUpdate();
+            try (PreparedStatement accountStmt = conn.prepareStatement(deleteAccountSQL)) {
+                accountStmt.setInt(1, accountId);
+                accountStmt.executeUpdate();
             }
-
-            // TODO 10: If the customer has no other accounts, delete the customer
             if (!hasOtherAccounts(conn, customerId)) {
-                try (PreparedStatement deleteCustomerStmt = conn.prepareStatement(deleteCustomerSQL)) {
-                    deleteCustomerStmt.setInt(1, customerId);
-                    deleteCustomerStmt.executeUpdate();
+                try (PreparedStatement customerStmt = conn.prepareStatement(deleteCustomerSQL)) {
+                    customerStmt.setInt(1, customerId);
+                    customerStmt.executeUpdate();
                 }
             }
-
-            // Commit the transaction
             conn.commit();
             System.out.println("Bank account belong to " + customerId + " deleted successfully.");
-
         } catch (SQLException e) {
             System.err.println("SQLException :" + e.getMessage());
         }
@@ -151,20 +130,17 @@ public class BankingSystem {
 
     // Task 4: View all customers and their account details
     public static void viewAllCustomers(Connection conn) {
-        // TODO 11: JOIN query to fetch customer and account details
-        String query = "SELECT c.name, c.address, a.id AS account_id, a.balance " +
-                       "FROM customers c JOIN accounts a ON c.id = a.customer_id";
+        String query = "SELECT c.name, c.address, a.id, a.balance FROM customers c JOIN accounts a ON c.id = a.customer_id";
 
         try {
             PreparedStatement stmt = conn.prepareStatement(query);
             ResultSet rs = stmt.executeQuery();
 
-            // TODO 12: Loop through ResultSet and display all details
             while (rs.next()) {
-                String name      = rs.getString("name");
-                String address   = rs.getString("address");
-                int    accountId = rs.getInt("account_id");
-                double balance   = rs.getDouble("balance");
+                String name = rs.getString("name");
+                String address = rs.getString("address");
+                int accountId = rs.getInt("id");
+                double balance = rs.getDouble("balance");
                 System.out.printf("Customer: %s, Address: %s, Account: %d, Balance: %.2f%n",
                         name, address, accountId, balance);
             }
@@ -200,7 +176,7 @@ public class BankingSystem {
         return false;
     }
 
-    // Method to create the BankDB database
+    // Method to create the Inventory Management database
     public static void createDatabase(Connection conn) throws SQLException {
         String query = "CREATE DATABASE IF NOT EXISTS BankDB";
         Statement stmt = conn.createStatement();
